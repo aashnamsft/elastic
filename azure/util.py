@@ -120,6 +120,55 @@ def install_aks_engine():
         commands = ["chmod 700 config/get-akse.sh", "./config/get-akse.sh"]
         run_commands(commands)
 
+# Download AzCopy script to upload to AzureBlobStorage
+def download_azcopy_script():
+    print('Downloading azcopy cli')
+    url = 'https://aka.ms/downloadazcopy-v10-linux'
+    filename,_ = urllib.request.urlretrieve(url, 'config/azcopy.tar.gz')
+    tar_file_object = tarfile.open(filename, "r:gz")
+    for member in tar_file_object.getmembers():
+        if member.isreg():
+            member.name = os.path.basename(member.name)
+            if "azcopy" == member.name:
+                tar_file_object.extract(member.name, '.')
+                break
+
+# Download AzCopy script for windows
+def download_azcopy_script_for_windows():
+    url = 'https://aka.ms/downloadazcopy-v10-windows'
+    filename,_ = urllib.request.urlretrieve(url, 'config/azcopy.zip')
+    zip_file_object = zipfile.ZipFile(filename, 'r')
+    for member in zip_file_object.infolist():
+        if not member.is_dir():
+            member.filename = os.path.basename(member.filename)
+            if 'azcopy' in member.filename:
+                zip_file_object.extract(member, '.')
+                break
+
+"""
+ Helper function to upload to AzureBlob storage based on
+ Storage account,
+ Storage container,
+ SAS Token
+"""
+def upload_to_azure_blob(args):
+    if os.name == "nt":
+        download_azcopy_script_for_windows()
+        commands = ["azcopy copy \"{}\" \"https://{}.blob.core.windows.net/{}{}\" --recursive=True"
+        .format(args.source_path,
+         args.account_name,
+         args.container_name,
+         args.sas_token)]
+        run_commands(commands)
+    else:
+        download_azcopy_script()
+        commands = ["./azcopy copy \'{}\' \'https://{}.blob.core.windows.net/{}{}\' --recursive=True"
+        .format(args.source_path,
+         args.account_name,
+         args.container_name,
+         args.sas_token)]
+        run_commands(commands)
+
 
 """
  Sets KUBECONFIG environment variable to 

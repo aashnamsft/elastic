@@ -12,6 +12,8 @@ from shutil import copyfile
 PETCTL_DIR = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
+# This method runs all commands in a separate
+# process and returns the output
 def run_commands(cmds):
     output = []
     set_kubeconfig_environment_var()
@@ -34,6 +36,7 @@ def run_commands(cmds):
     return output
 
 
+# Configures job yaml file based on user inputs
 def configure_yaml(args):
     SAMPLE_YAML_FILE = os.path.join(PETCTL_DIR, "config/sample_specs.yaml")
     result_yaml_file = os.path.join(PETCTL_DIR, "config/", "azure-pytorch-elastic.yaml")
@@ -55,6 +58,7 @@ def configure_yaml(args):
     yaml.dump(data, open(result_yaml_file, "w"))
 
 
+# Configures kubernetes json file based on user inputs
 def configure_json(args):
     KUBERNETES_JSON_FILE = os.path.join(PETCTL_DIR, "config/kubernetes.json")
     result_json_file = os.path.join(PETCTL_DIR, "config/", "kubernetes.json")
@@ -71,6 +75,7 @@ def configure_json(args):
     json.dump(data, open(result_json_file, "w"), indent=4)
 
 
+# Log in to Azure
 def azure_login():
     check_cmd = "az account show"
     p = subprocess.Popen(check_cmd, shell=True, stdout=subprocess.PIPE, env=os.environ)
@@ -84,6 +89,7 @@ def azure_login():
             print(line)
 
 
+# Download AKS engine installer script for Linux
 def download_aks_engine_script():
     url = (
         "https://raw.githubusercontent.com/Azure/aks-engine/master/scripts/get-akse.sh"
@@ -92,6 +98,7 @@ def download_aks_engine_script():
     print("Downloading aks engine script.....")
 
 
+# Download AKS engine binary for Windows
 def download_aks_engine_script_for_windows():
     print("Downloading aks engine binary.....")
     url = "https://github.com/Azure/aks-engine/releases/download/v0.47.0/aks-engine-v0.47.0-windows-amd64.zip"
@@ -104,6 +111,7 @@ def download_aks_engine_script_for_windows():
             break
 
 
+# Installs AKS engine from the script/binary
 def install_aks_engine():
     if os.name == "nt":
         download_aks_engine_script_for_windows()
@@ -111,6 +119,12 @@ def install_aks_engine():
         download_aks_engine_script()
         commands = ["chmod 700 config/get-akse.sh", "./config/get-akse.sh"]
         run_commands(commands)
+
+
+"""
+ Sets KUBECONFIG environment variable to 
+ the path to the  json file generated
+"""
 
 
 def set_kubeconfig_environment_var():
@@ -128,6 +142,7 @@ def set_kubeconfig_environment_var():
             print("Setting KUBECONFIG env variable ", os.environ.get("KUBECONFIG"))
 
 
+# Create storage secret named 'pet-blob-secret'
 def create_storage_secrets(args):
     commands = [
         "kubectl create secret generic pet-blob-secret \
@@ -140,6 +155,7 @@ def create_storage_secrets(args):
     run_commands(commands)
 
 
+# Install Azure blobfuse drivers
 def install_blobfuse_drivers():
     commands = [
         "kubectl apply -f https://raw.githubusercontent.com/Azure/kubernetes-volume-drivers/master/flexvolume/blobfuse/deployment/blobfuse-flexvol-installer-1.9.yaml"
@@ -147,6 +163,7 @@ def install_blobfuse_drivers():
     run_commands(commands)
 
 
+# Create docker image secrets given user inputs
 def create_docker_image_secret(args):
     commands = [
         "kubectl create secret \
@@ -162,6 +179,7 @@ def create_docker_image_secret(args):
     print("Docker image registered..")
 
 
+# Deploy AKS cluster
 def deploy_aks_cluster(args):
     commands = [
         "aks-engine deploy -f  --subscription-id {0} \
@@ -184,6 +202,7 @@ def deploy_aks_cluster(args):
     run_commands(commands)
 
 
+# Scale the cluster up and down based on user input
 def scale_cluster(args):
     command = [
         "aks-engine scale \

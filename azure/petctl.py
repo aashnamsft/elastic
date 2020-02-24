@@ -7,24 +7,32 @@ def configure(args):
     configure_json(args)
 
 
+# Deploys a Kubernetes cluster
 def setup(args):
+    # Login to Azure
     azure_login()
+    # Install AKS Engine
     install_aks_engine()
+    # Deploy an AKS cluster using kubernetes.json
     deploy_aks_cluster(args)
 
 
+# Upload code/data to Azure blob storage
 def upload_storage(args):
     upload_to_azure_blob(args)
 
 
+# Create Azure blob storage secret
 def storage_secret(args):
     create_storage_secrets(args)
 
 
+# Create docker image secrets
 def docker_secret(args):
     create_docker_image_secret(args)
 
 
+# Submits your training job
 def run_job(args):
     install_blobfuse_drivers()
     commands = [
@@ -37,6 +45,7 @@ def run_job(args):
     run_commands(commands)
 
 
+# Check current status of your pods
 def check_status():
     commands = [
         "kubectl describe pods",
@@ -46,10 +55,12 @@ def check_status():
     run_commands(commands)
 
 
+# Get logs of your job from each pod
 def get_logs():
     run_commands(["kubectl logs --selector app=azure-pytorch-elastic "])
 
 
+# Deletes secrets and cluster
 def delete_resources():
     commands = [
         "kubectl config delete-cluster azure-pytorch-elastic",
@@ -263,7 +274,7 @@ if __name__ == "__main__":
     parser_get_logs.set_defaults(func=get_logs)
 
     # ---------------------------------- #
-    #            SCALE CLUSTER                #
+    #            SCALE CLUSTER           #
     # ---------------------------------- #
     parser_scale = subparser.add_parser("scale", help="Scale up/down your cluster")
 

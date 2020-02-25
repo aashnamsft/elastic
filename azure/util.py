@@ -66,7 +66,6 @@ def configure_yaml_docker(image_name):
     with open(yaml_file) as f:
         data = yaml.load(f)
 
-    data["spec"]["parallelism"] = args.max_size
     data["spec"]["template"]["spec"]["containers"][0]["image"] = image_name
 
     yaml.dump(data, open(yaml_file, "w"))

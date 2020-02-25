@@ -57,6 +57,19 @@ def configure_yaml(args):
 
     yaml.dump(data, open(result_yaml_file, "w"))
 
+# Configures job yaml file based on user docker image
+def configure_yaml_docker(image_name):
+    yaml_file = os.path.join(PETCTL_DIR, "config/azure-pytorch-elastic.yaml")
+
+    print("Configuring job yaml ", yaml_file)
+
+    with open(yaml_file) as f:
+        data = yaml.load(f)
+
+    data["spec"]["parallelism"] = args.max_size
+    data["spec"]["template"]["spec"]["containers"][0]["image"] = image_name
+
+    yaml.dump(data, open(yaml_file, "w"))
 
 # Configures kubernetes json file based on user inputs
 def configure_json(args):
@@ -214,6 +227,7 @@ def install_blobfuse_drivers():
 
 # Create docker image secrets given user inputs
 def create_docker_image_secret(args):
+    configure_yaml_docker(args.server)
     commands = [
         "kubectl create secret \
                 docker-registry pet-docker-secret \

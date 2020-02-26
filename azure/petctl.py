@@ -1,5 +1,5 @@
 from util import *
-
+import argparse
 
 # Create a Kubernetes specs and YAML job file based on user inputs
 def configure(args):

@@ -1,3 +1,4 @@
+import argparse
 import yaml
 import json
 import os
@@ -17,7 +18,7 @@ PETCTL_DIR = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__
 def run_commands(cmds):
     output = []
     set_kubeconfig_environment_var()
-
+    
     for cmd in cmds:
         print("Running {}".format(cmd))
         process = subprocess.Popen(
@@ -204,13 +205,20 @@ def upload_to_azure_blob(args):
 
 def set_kubeconfig_environment_var():
     if os.path.isdir("_output"):
-        config_path = PETCTL_DIR + "\\_output\\azure-pytorch-elastic\\kubeconfig"
+        if os.name == "nt":
+            config_path = PETCTL_DIR + "\\_output\\azure-pytorch-elastic\\kubeconfig"
+        else:
+            config_path = PETCTL_DIR + "/_output/azure-pytorch-elastic/kubeconfig"
         print("Reading KUBECONFIG environment variable from {}".format(config_path))
 
         for files in walk(config_path):
             for f in files:
+                print(f)
                 if f and f[0].endswith(".json"):
-                    config_path = config_path + "\\" + f[0]
+                    if os.name == "nt":
+                        config_path = config_path + "\\" + f[0]
+                    else:
+                        config_path = config_path + "/" + f[0]
 
         if config_path.endswith(".json"):
             os.environ["KUBECONFIG"] = config_path

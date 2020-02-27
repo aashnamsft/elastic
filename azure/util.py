@@ -7,6 +7,7 @@ import os.path
 import subprocess
 import uuid
 import urllib.request
+import tarfile
 import zipfile
 from shutil import copyfile
 

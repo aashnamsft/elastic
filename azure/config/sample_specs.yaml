@@ -12,8 +12,7 @@ spec:
     spec:
       containers:
       - name: petimage
-        #image: petcr.azurecr.io/petimage:sedymche3
-        image: amlmcr.azurecr.io/public/azureml/elastic:pytorch-elastic-openmpi3.1.2-cuda10.1-cudnn7-ubuntu18.04
+        image: mcr.microsoft.com/azureml/elastic:pytorch-elastic-openmpi3.1.2-cuda10.1-cudnn7-ubuntu18.04
         command: ["/bin/bash", "-c"]
         args: ["python /mnt/azure/pet/code/imagenet/main.py --input_path /mnt/azure/pet/data/train/"]
         imagePullPolicy: Always

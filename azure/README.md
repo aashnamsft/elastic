@@ -58,6 +58,8 @@ python petctl.py docker_secret --server <docker server>
 ```
 
 Training job file is updated to mount users storage account onto worker instances and apply the user provided docker image.
+Base docker image to run Pytorch Elastic on Azure is at [Dockerfile](config/Dockerfile). Instructions on publishing docker image to  AzureContainer registry can be found at [ACR](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli).
+Docker image secret generation can be skipped for running [imagenet](../../examples/imagenet/main.py) example as job specs yaml is already populated with public AzureML image with pytorch elastic support.
 
 5. #### Start your training job
 
@@ -78,7 +80,6 @@ python petctl.py --upload_storage --source_path <path to imagenet train folder>
                                   --container_name data
                                   --sas_token <sas token for blob storage>
 ```
-Base docker image to run Pytorch Elastic on Azure is at [Dockerfile](config/Dockerfile). Instructions on publishing docker image to  AzureContainer registry can be found at [ACR](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli).
 
 6. #### Check status of your job
 ```

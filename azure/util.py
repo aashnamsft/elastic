@@ -68,7 +68,7 @@ def configure_yaml_storage(container_name):
     with open(yaml_file) as f:
         data = yaml.load(f)
 
-    data["spec"]["template"]["spec"]["volumes"][0]["options"]["container"] = container_name
+    data["spec"]["template"]["spec"]["volumes"][0]["flexVolume"]["options"]["container"] = container_name
 
     yaml.dump(data, open(yaml_file, "w"))
 

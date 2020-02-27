@@ -58,6 +58,19 @@ def configure_yaml(args):
     yaml.dump(data, open(result_yaml_file, "w"))
 
 # Configures job yaml file based on user docker image
+def configure_yaml_storage(container_name):
+    yaml_file = os.path.join(PETCTL_DIR, "config/azure-pytorch-elastic.yaml")
+
+    print("Configuring job yaml ", yaml_file)
+
+    with open(yaml_file) as f:
+        data = yaml.load(f)
+
+    data["spec"]["template"]["spec"]["volumes"][0]["options"]["container"] = container_name
+
+    yaml.dump(data, open(yaml_file, "w"))
+
+# Configures job yaml file based on user docker image
 def configure_yaml_docker(image_name):
     yaml_file = os.path.join(PETCTL_DIR, "config/azure-pytorch-elastic.yaml")
 
@@ -180,6 +193,7 @@ def upload_to_azure_blob(args):
          args.container_name,
          args.sas_token)]
         run_commands(commands)
+    configure_yaml_storage(args.container_name)
 
 
 """

@@ -3,8 +3,8 @@ This directory contains scripts and libraries that help users run pytorch elasti
 
 ## Prerequisites
 1. Familiarity with [Azure](https://azure.microsoft.com/en-us/), [aks-engine](https://github.com/Azure/aks-engine), [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/)
-2. Install the Azure [CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
-3. Quota available for Standard_DS1_v2 instance and Standard_NC6s_v3 instance.
+2. Quota available for Standard_DS1_v2 instance and Standard_NC6s_v3 instance.
+3. Access to Azure subscription, Resource Group and Storage. (Refer [here](https://github.com/Azure/MachineLearningNotebooks/blob/master/configuration.ipynb) for setup instructions).
 
 # Sample Usage
 
@@ -27,7 +27,7 @@ python petctl.py setup --dns_prefix azure-pytorch-elastic
                        --client_id <service principal client id>
                        --client_secret <service principal client secret>                       
 ```
-This creates an Azure Kubernetes cluster with 1 Standard_DS1_v2 master instances and specified number of Standard_NC6s_v3 worker instances. 
+This creates an Azure Kubernetes cluster with 1 Standard_DS1_v2 master instances and specified number of Standard_NC6s_v3 worker instance in the resource group created in [Prerequisites](#Prerequisites) #3.
 
 3. #### Upload to Azure Blob storage
 
@@ -95,6 +95,8 @@ python petctl.py scale --rg "<resource_group>"
                        --client_secret <service principal client secret>
                        --new_node_count <worker instances count>    
 ```
+(Here subscription id and resource group is the one setup in [Prerequisites](#Prerequisites) #3.
+
 8. #### Delete resources
 ````
 python petctl.py delete_resources

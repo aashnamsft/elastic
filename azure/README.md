@@ -53,8 +53,9 @@ python petctl.py storage_secret --account_name <storage account name>
 ##### Generate Docker image secret
 ```
 python petctl.py docker_secret --server <docker server> 
-                                --username <docker username> 
-                                --password <docker password>
+                               --username <docker username> 
+                               --password <docker password>
+                               --image_name <docker image name>
 ```
 
 Training job file is updated to mount users storage account onto worker instances and apply the user provided docker image.

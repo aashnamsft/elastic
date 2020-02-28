@@ -235,6 +235,10 @@ if __name__ == "__main__":
         "--password", type=str, required=True, help="Docker password"
     )
 
+    parser_docker_secret.add_argument(
+        "--image_name", type=str, required=True, help="Docker Imagename"
+    )
+
     parser_docker_secret.set_defaults(func=docker_secret)
 
     # ---------------------------------- #

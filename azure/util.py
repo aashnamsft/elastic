@@ -249,7 +249,7 @@ def install_blobfuse_drivers():
 
 # Create docker image secrets given user inputs
 def create_docker_image_secret(args):
-    configure_yaml_docker(args.server)
+    configure_yaml_docker(args.image_name)
     commands = [
         "kubectl create secret \
                 docker-registry pet-docker-secret \

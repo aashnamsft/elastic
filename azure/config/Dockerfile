@@ -17,3 +17,4 @@ RUN ldconfig /usr/local/cuda/lib64/stubs && \
     pip install future==0.17.1 && \
     pip install python-etcd==0.4.5 && \
     pip install torchelastic
+    

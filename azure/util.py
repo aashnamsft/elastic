@@ -214,7 +214,6 @@ def set_kubeconfig_environment_var():
 
         for files in walk(config_path):
             for f in files:
-                print(f)
                 if f and f[0].endswith(".json"):
                     if os.name == "nt":
                         config_path = config_path + "\\" + f[0]

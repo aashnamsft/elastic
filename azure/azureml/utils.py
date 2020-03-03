@@ -1,3 +1,28 @@
+import os
+import subprocess
+
+# This method runs all commands in a separate
+# process and returns the output
+def run_commands(cmds):
+    output = []
+    
+    for cmd in cmds:
+        print("Running {}".format(cmd))
+        process = subprocess.Popen(
+            cmd,
+            universal_newlines=True,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=os.environ,
+        )
+        for line in process.stdout:
+            print(line)
+            output.append(line)
+        for err in process.stderr:
+            print(err)
+    return output
+
 from azure.common.credentials import ServicePrincipalCredentials
 def get_credentials(tenant, client_id, secret):
     credentials = ServicePrincipalCredentials(
@@ -266,8 +291,19 @@ def setup_etcd(compute_client, rg_name, vm_name):
 
     ext = ext_poller.result()
 
+# Ping port 2379 to validate etcd setup
+def verify_etcd(network_client, rg_name, ip_name):
+    public_ip_address = network_client.public_ip_addresses.get(rg_name, ip_name)
+    curl_cmd = ["curl -L http://{}:2379/version".format(public_ip_address.ip_address)]
+    run_commands(curl_cmd)
 
 # Delete resources
 def delete_resources(resource_group_client, rg_name):
     resource_group_client.resource_groups.delete(rg_name)
- 
+
+# submit parallel single node jobs
+from azureml.widgets import RunDetails
+def submit_job(experiment, estimator, max_nodes):
+    for node in range(0, max_nodes):
+        pet_run = experiment.submit(estimator)
+        RunDetails(pet_run).show()

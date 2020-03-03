@@ -65,10 +65,42 @@ def create_vnet(network_client, rg_name, location, vnet_name):
     )
     return creation_result.result()
 
+# Create a Network Security Group and open ports 29876,29877 for Batch
+from azure.mgmt.network.models import NetworkSecurityGroup
+from azure.mgmt.network.models import SecurityRule, SecurityRuleAccess, SecurityRuleDirection, SecurityRuleProtocol
+
+def create_nsg(network_client, rg_name, location, nsg_name):
+    params_create = NetworkSecurityGroup(
+            location=location,
+            security_rules=[
+                SecurityRule(
+                    name='Port_29876-29877',
+                    access=SecurityRuleAccess.allow,
+                    description='Batch Node Management',
+                    destination_address_prefix="*",
+                    destination_port_range='29876-29877',
+                    direction=SecurityRuleDirection.inbound,
+                    priority=1040,
+                    protocol=SecurityRuleProtocol.tcp,
+                    source_address_prefix='BatchNodeManagement',
+                    source_port_range="*",
+                ),
+            ],
+        )
+
+    result_create_NSG = network_client.network_security_groups.create_or_update(
+            rg_name,
+            nsg_name,
+            params_create,
+        )
+
+    return result_create_NSG.result()
+
 # Create subnet
-def create_subnet(network_client, rg_name, vnet_name, subnet_name):
+def create_subnet(network_client, rg_name, vnet_name, subnet_name, nsg_obj):
     subnet_params = {
-        'address_prefix': '10.0.0.0/24'
+        'address_prefix': '10.0.0.0/24',
+        'network_security_group' : nsg_obj
     }
     creation_result = network_client.subnets.create_or_update(
         rg_name,

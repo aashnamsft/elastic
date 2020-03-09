@@ -416,12 +416,15 @@ class ElasticRun:
         assert self.num_nodes == 0, "Job already in progress, node count can be scaled using scale_job() method"
         assert num_nodes >= self.min_nodes, "Node count should be greater than or equal to Minimum Node count"
         assert num_nodes <= self.max_nodes, "Node count should be lesser than or equal to Maximum Node count"
+        self.estimator = estimator
+        self.num_nodes = num_nodes
         for node in range(0, num_nodes):
             pet_run = self.pet_experiment.submit(estimator)
             RunDetails(pet_run).show()
 
-    def scale_job(self, estimator, num_nodes):
+    def scale_job(self, num_nodes):
         assert num_nodes <= self.max_nodes, "Node count should be lesser than or equal to Maximum Node count"
         for node in range(self.num_nodes, num_nodes):
-            pet_run = self.pet_experiment.submit(estimator)
+            pet_run = self.pet_experiment.submit(self.estimator)
             RunDetails(pet_run).show()
+        self.num_nodes = num_nodes

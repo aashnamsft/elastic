@@ -105,6 +105,7 @@ class ElasticRun:
 
     # Create Public IP
     def create_public_ip_address(self):
+        print("Creating Public IP Address")
         public_ip_addess_params = {
             'location': self.location,
             'public_ip_allocation_method': 'Dynamic'
@@ -118,6 +119,7 @@ class ElasticRun:
 
     # Create VNET
     def create_vnet(self):
+        print("Creating VNET")
         vnet_params = {
             'location': self.location,
             'address_space': {
@@ -133,6 +135,7 @@ class ElasticRun:
 
     # Create a Network Security Group and open ports 29876,29877 for Batch
     def create_nsg(self):
+        print("Creating NSG")
         params_create = NetworkSecurityGroup(
                 location=self.location,
                 security_rules=[
@@ -160,6 +163,7 @@ class ElasticRun:
 
     # Create subnet
     def create_subnet(self, nsg_obj):
+        print("Creating Subnet")
         subnet_params = {
             'address_prefix': '10.0.0.0/24',
             'network_security_group' : nsg_obj
@@ -174,6 +178,7 @@ class ElasticRun:
 
     # Create NIC
     def create_nic(self):
+        print("Creating NIC")
         subnet_info = self.network_client.subnets.get(
             self.rg_name,
             self.vnet_name,
@@ -215,6 +220,7 @@ class ElasticRun:
 
     # Create VM for etcd
     def create_etcd_vm(self):
+        print("Creating VM for ETCD")
         nic = self.network_client.network_interfaces.get(
             self.rg_name,
             self.nic_name
@@ -260,6 +266,7 @@ class ElasticRun:
 
     # Run custom script extension to setup etcd
     def setup_etcd_vm(self):
+        print("Setting up ETCD")
         ext_type_name = 'CustomScriptForLinux'
         ext_name = 'installetcd'
         params_create = {
@@ -398,6 +405,7 @@ class ElasticRun:
 
         # Use the 'status' property to get a detailed status for the current cluster. 
         #print(self.pet_compute_target.status.serialize())
+        return self.pet_compute_target
     
     # Setup Azure Machine Learning Experiment
     def create_experiment(self, experiment_name):
@@ -405,7 +413,7 @@ class ElasticRun:
         
     # submit parallel single node jobs
     def submit_job(self, estimator, num_nodes):
-        assert num_nodes == 0, "Job already in progress, node count can be scaled using scale_job() method"
+        assert self.num_nodes == 0, "Job already in progress, node count can be scaled using scale_job() method"
         assert num_nodes >= self.min_nodes, "Node count should be greater than or equal to Minimum Node count"
         assert num_nodes <= self.max_nodes, "Node count should be lesser than or equal to Maximum Node count"
         for node in range(0, num_nodes):

@@ -6,7 +6,6 @@ from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
-from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.network.models import NetworkSecurityGroup
 from azure.mgmt.network.models import SecurityRule, SecurityRuleAccess, SecurityRuleDirection, SecurityRuleProtocol
 
@@ -41,30 +40,19 @@ def run_commands(cmds):
             print(err)
     return output
 
-def get_credentials(tenant, client_id, secret):
-    credentials = ServicePrincipalCredentials(
-        tenant = tenant,
-        client_id = client_id,
-        secret = secret
-    )
-
-    return credentials
-
 class ElasticRun:
-    def __init__(self, tenant, client_id, secret, subscription_id):
-        self.tenant = tenant
-        self.client_id = client_id
-        self.secret = secret
+    def __init__(self, credentials, subscription_id):
         self.subscription_id = subscription_id
-        self.workers_list = []
         
         # Generate user service principal credentials
-        self.credentials = get_credentials(tenant, client_id, secret)
+        self.credentials = credentials
 
         # Create ARM resource client
         self.resource_group_client = ResourceManagementClient(self.credentials, self.subscription_id)
         self.network_client = NetworkManagementClient(self.credentials, self.subscription_id)
         self.compute_client = ComputeManagementClient(self.credentials, self.subscription_id)
+
+        self.workers_list = []
 
 
     def init_resource_group(self, rg_name, location):

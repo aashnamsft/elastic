@@ -13,8 +13,10 @@ from azure.mgmt.network.models import SecurityRule, SecurityRuleAccess, Security
 # AzureML libraries
 import azureml.core
 from azureml.core import Experiment, Workspace, Run
+from azureml.core.container_registry import ContainerRegistry
 from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.core.compute_target import ComputeTargetException
+from azureml.train.estimator import Estimator
 from azureml.widgets import RunDetails
 
 # This method runs all commands in a separate
@@ -54,7 +56,7 @@ class ElasticRun:
         self.client_id = client_id
         self.secret = secret
         self.subscription_id = subscription_id
-        self.num_nodes = 0
+        self.workers_list = []
         
         # Generate user service principal credentials
         self.credentials = get_credentials(tenant, client_id, secret)
@@ -380,6 +382,73 @@ class ElasticRun:
                             exist_ok = True)
         self.ws.get_details()
         return self.ws
+    
+    # Setup Azure Machine Learning Experiment
+    def create_experiment(self, experiment_name):
+        self.pet_experiment = Experiment(self.ws, name=experiment_name)
+
+    # etcd cluster setup
+    def create_etcd_cluster(self, etcd_cluster_name, vm_size):
+
+        # Verify that the cluster doesn't exist already
+        try:
+            self.pet_etcd_target = ComputeTarget(workspace=self.ws, name=etcd_cluster_name)
+            print('Found existing compute target.')
+        except ComputeTargetException:
+            print('Creating a new compute target...')
+            compute_config = AmlCompute.provisioning_configuration(vm_size=vm_size,
+                                                                min_nodes=1,
+                                                                max_nodes=3,
+                                                                vnet_name=self.vnet_name,
+                                                                vnet_resourcegroup_name=self.rg_name,
+                                                                subnet_name=self.subnet_name)
+            
+            # create the cluster
+            self.pet_etcd_target = ComputeTarget.create(self.ws, etcd_cluster_name, compute_config)
+            self.pet_etcd_target.wait_for_completion(show_output=True)
+
+        # Use the 'status' property to get a detailed status for the current cluster. 
+        #print(self.pet_etcd_target.status.serialize())
+        return self.pet_etcd_target
+
+    # setup etcd cluster
+    def setup_etcd_cluster(self):
+        # Define the project folder
+        project_folder = '.' # This is to allow the libraries stored under pytorch/ to be loaded
+
+        ## Using a public image published on Azure.
+        #image_name = 'quay.io/coreos/etcd:latest'
+        #image_name = 'mcr.microsoft.com/oss/etcd-io/etcd:v3.1.10'
+        image_name = 'aci-etcd:latest'
+        image_registry_details = ContainerRegistry()
+        image_registry_details.address = 'petcr.azurecr.io'
+        image_registry_details.username = 'petcr'
+        image_registry_details.password = '7jDTVgYJJZHzL/napUEe2F98yBSlv07T'
+
+        # Define the Pytorch estimator
+        etcd_estimator = Estimator(source_directory=project_folder,
+                            # Compute configuration
+                            compute_target=self.pet_etcd_target,
+                            node_count=1, 
+                            
+                            #Docker image
+                            use_docker=True,
+                            custom_docker_image=image_name,
+                            image_registry_details=image_registry_details,
+                            user_managed=True,
+                            
+                            # Training script parameters
+                            #script_params = { },
+                            
+                            entry_script='etcd.py'
+                        )
+        
+        self.pet_etcd_run = self.pet_experiment.submit(etcd_estimator)
+        RunDetails(self.pet_etcd_run).show()
+
+    def create_setup_etcd_cluster(self, etcd_cluster_name, etcd_vm_size):
+        self.create_etcd_cluster(etcd_cluster_name, etcd_vm_size)
+        self.setup_etcd_cluster()
 
     # AML Compute Cluster Setup
     def create_amlcompute_cluster(self, pet_cluster_name, min_nodes, max_nodes, vm_size):
@@ -406,25 +475,45 @@ class ElasticRun:
         # Use the 'status' property to get a detailed status for the current cluster. 
         #print(self.pet_compute_target.status.serialize())
         return self.pet_compute_target
-    
-    # Setup Azure Machine Learning Experiment
-    def create_experiment(self, experiment_name):
-        self.pet_experiment = Experiment(self.ws, name=experiment_name)
         
     # submit parallel single node jobs
     def submit_job(self, estimator, num_nodes):
-        assert self.num_nodes == 0, "Job already in progress, node count can be scaled using scale_job() method"
+        assert len(self.workers_list) == 0, "Job already in progress, node count can be scaled using scale_job() method"
         assert num_nodes >= self.min_nodes, "Node count should be greater than or equal to Minimum Node count"
         assert num_nodes <= self.max_nodes, "Node count should be lesser than or equal to Maximum Node count"
         self.estimator = estimator
-        self.num_nodes = num_nodes
-        for node in range(0, num_nodes):
-            pet_run = self.pet_experiment.submit(estimator)
+        for worker in range(0, num_nodes):
+            pet_run = self.pet_etcd_run.submit_child(estimator)
+            self.workers_list.append(pet_run)
             RunDetails(pet_run).show()
 
+    def get_num_workers(self):
+        worker_count = 0
+        for worker in self.workers_list:
+            if worker.get_status() == 'Running':
+                worker_count += 1
+        return worker_count
+
     def scale_job(self, num_nodes):
+        assert num_nodes >= self.min_nodes, "Node count should be greater than or equal to Minimum Node count"
         assert num_nodes <= self.max_nodes, "Node count should be lesser than or equal to Maximum Node count"
-        for node in range(self.num_nodes, num_nodes):
-            pet_run = self.pet_experiment.submit(self.estimator)
+        num_workers = self.get_num_workers()
+        if num_workers < num_nodes:
+            self.scale_up(num_nodes - num_workers)
+        elif num_workers > num_nodes:
+            self.scale_down(num_workers - num_nodes)
+
+    def scale_up(self, num_nodes):
+        for worker in range(0, num_nodes):
+            pet_run = self.pet_etcd_run.submit_child(self.estimator)
+            self.workers_list.append(pet_run)
             RunDetails(pet_run).show()
-        self.num_nodes = num_nodes
+
+    def scale_down(self, num_nodes):
+        for node in range(0, num_nodes):
+            if self.workers_list:
+               worker = self.workers_list.pop(0)
+               worker.complete()
+               worker.cancel()
+            else:
+                print("Run doesn't have anymore available workers")

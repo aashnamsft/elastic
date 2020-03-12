@@ -512,9 +512,11 @@ class ElasticRun:
 
     # Remove worker nodes from current job
     def scale_down(self, num_nodes):
+        print(f"Scaling from {self.get_num_workers()} to {num_nodes}")
         for node in range(0, num_nodes):
             if self.workers_list:
                worker = self.workers_list.pop(0)
+               # TODO print worker details
                worker.complete()
                worker.cancel()
             else:

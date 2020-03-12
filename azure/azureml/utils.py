@@ -483,9 +483,9 @@ class ElasticRun:
         assert num_nodes <= self.max_nodes, "Node count should be lesser than or equal to Maximum Node count"
         self.estimator = estimator
         for worker in range(0, num_nodes):
-            pet_run = self.pet_etcd_run.submit_child(estimator)
-            self.workers_list.append(pet_run)
-            RunDetails(pet_run).show()
+            pet_worker_run = self.pet_experiment.submit(estimator)
+            self.workers_list.append(pet_worker_run)
+            RunDetails(pet_worker_run).show()
 
     def get_num_workers(self):
         worker_count = 0
@@ -506,7 +506,7 @@ class ElasticRun:
     # Add worker nodes to current job
     def scale_up(self, num_nodes):
         for worker in range(0, num_nodes):
-            pet_run = self.pet_etcd_run.submit_child(self.estimator)
+            pet_run = self.pet_experiment.submit(self.estimator)
             self.workers_list.append(pet_run)
             RunDetails(pet_run).show()
 

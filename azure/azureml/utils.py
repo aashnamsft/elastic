@@ -503,12 +503,14 @@ class ElasticRun:
         elif num_workers > num_nodes:
             self.scale_down(num_workers - num_nodes)
 
+    # Add worker nodes to current job
     def scale_up(self, num_nodes):
         for worker in range(0, num_nodes):
             pet_run = self.pet_etcd_run.submit_child(self.estimator)
             self.workers_list.append(pet_run)
             RunDetails(pet_run).show()
 
+    # Remove worker nodes from current job
     def scale_down(self, num_nodes):
         for node in range(0, num_nodes):
             if self.workers_list:
@@ -517,3 +519,15 @@ class ElasticRun:
                worker.cancel()
             else:
                 print("Run doesn't have anymore available workers")
+
+    # cancel all the worker jobs and etcd
+    def cancel_job(self):
+        # Cancel job on all worker nodes
+        for worker in self.workers_list:
+            worker.complete()
+            worker.cancel()
+            self.workers_list.remove(worker)
+        
+        # Cancel etcd
+        self.pet_etcd_run.complete()
+        self.pet_etcd_run.cancel()

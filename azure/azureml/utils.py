@@ -404,14 +404,8 @@ class ElasticRun:
         # Define the project folder
         project_folder = '.' # This is to allow the libraries stored under pytorch/ to be loaded
 
-        ## Using a public image published on Azure.
-        #image_name = 'quay.io/coreos/etcd:latest'
-        #image_name = 'mcr.microsoft.com/oss/etcd-io/etcd:v3.1.10'
-        image_name = 'aci-etcd:latest'
-        image_registry_details = ContainerRegistry()
-        image_registry_details.address = 'petcr.azurecr.io'
-        image_registry_details.username = 'petcr'
-        image_registry_details.password = '7jDTVgYJJZHzL/napUEe2F98yBSlv07T'
+        ## Using a public image published on Docker Hub.
+        image_name = 'rskolli/pet-etcd:latest'
 
         # Define the Pytorch estimator
         etcd_estimator = Estimator(source_directory=project_folder,
@@ -422,7 +416,6 @@ class ElasticRun:
                             #Docker image
                             use_docker=True,
                             custom_docker_image=image_name,
-                            image_registry_details=image_registry_details,
                             user_managed=True,
                             
                             # Training script parameters

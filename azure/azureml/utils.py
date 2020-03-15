@@ -421,7 +421,7 @@ class ElasticRun:
                             # Training script parameters
                             #script_params = { },
                             
-                            entry_script='etcd.py'
+                            entry_script='etcd-setup.py'
                         )
         
         self.pet_etcd_run = self.pet_experiment.submit(etcd_estimator)
